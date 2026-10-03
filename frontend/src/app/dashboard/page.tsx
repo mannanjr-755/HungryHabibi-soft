@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DashboardShell } from "@/components/DashboardShell";
 import { OrdersBoard } from "@/components/OrdersBoard";
+import { ServiceFloor } from "@/components/ServiceFloor";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -27,6 +28,7 @@ export default async function DashboardPage() {
       newOrderCount={newOrderCount}
       preparingCount={preparingCount}
     >
+      <ServiceFloor />
       <OrdersBoard />
     </DashboardShell>
   );

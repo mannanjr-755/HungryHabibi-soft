@@ -1,5 +1,5 @@
 /**
- * Regenerates Windows app icons from the BonPainer brand asset.
+ * Regenerates Windows app icons from the HungryHabibi brand asset.
  * Does not touch CRM application logic.
  */
 const fs = require("fs");

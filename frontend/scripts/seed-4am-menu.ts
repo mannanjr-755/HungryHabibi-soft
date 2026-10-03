@@ -1,6 +1,6 @@
 /**
- * Wipe old menu categories/items and seed the official BonPainer Cafe menu
- * from BonPainer_Cafe_Menu.pdf into the connected DATABASE_URL.
+ * Wipe old menu categories/items and seed the official Hungry Habibi Cafe menu
+ * from HungryHabibi_Cafe_Menu.pdf into the connected DATABASE_URL.
  */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -97,28 +97,28 @@ const MENU: { name: string; items: string[] }[] = [
 ];
 
 async function main() {
-  console.log("Connecting and syncing BonPainer Cafe menu...");
+  console.log("Connecting and syncing Hungry Habibi Cafe menu...");
 
-  let restaurant = await prisma.restaurant.findUnique({ where: { slug: "bonpainer" } });
+  let restaurant = await prisma.restaurant.findUnique({ where: { slug: "hungryhabibi" } });
   if (!restaurant) {
     // Migrate older slug casing if present
-    restaurant = await prisma.restaurant.findUnique({ where: { slug: "BonPainer" } });
+    restaurant = await prisma.restaurant.findUnique({ where: { slug: "hungryhabibi" } });
     if (restaurant) {
       restaurant = await prisma.restaurant.update({
         where: { id: restaurant.id },
-        data: { slug: "bonpainer", name: "BonPainer" },
+        data: { slug: "hungryhabibi", name: "Hungry Habibi" },
       });
     }
   }
   if (!restaurant) {
     restaurant = await prisma.restaurant.create({
       data: {
-        name: "BonPainer",
-        slug: "bonpainer",
+        name: "Hungry Habibi",
+        slug: "hungryhabibi",
         description: "Coffee & more — ice tea, hot coffees, mojitos, chillers, frappe, ice coffees.",
         phone: "+92 300 1234567",
         whatsapp: "+923001234567",
-        address: "BonPainer Cafe",
+        address: "Hungry Habibi Cafe",
         logo: "/logo.png",
         openingHours: JSON.stringify({
           mon: "11:00–23:00",
@@ -135,19 +135,19 @@ async function main() {
   } else {
     restaurant = await prisma.restaurant.update({
       where: { id: restaurant.id },
-      data: { name: "BonPainer", slug: "bonpainer" },
+      data: { name: "Hungry Habibi", slug: "hungryhabibi" },
     });
     console.log("Using restaurant:", restaurant.slug);
   }
 
   const passwordHash = await bcrypt.hash("password123", 10);
   // Ensure login email is lowercase (auth looks up email.toLowerCase())
-  const legacyAdmin = await prisma.user.findUnique({ where: { email: "admin@BonPainer.com" } });
+  const legacyAdmin = await prisma.user.findUnique({ where: { email: "admin@hungryhabibi.com" } });
   if (legacyAdmin) {
     await prisma.user.update({
       where: { id: legacyAdmin.id },
       data: {
-        email: "admin@bonpainer.com",
+        email: "admin@hungryhabibi.com",
         passwordHash,
         active: true,
         role: "ADMIN",
@@ -157,7 +157,7 @@ async function main() {
     });
   } else {
     await prisma.user.upsert({
-      where: { email: "admin@bonpainer.com" },
+      where: { email: "admin@hungryhabibi.com" },
       update: {
         passwordHash,
         active: true,
@@ -166,7 +166,7 @@ async function main() {
         restaurantId: restaurant.id,
       },
       create: {
-        email: "admin@bonpainer.com",
+        email: "admin@hungryhabibi.com",
         passwordHash,
         name: "Admin",
         role: "ADMIN",
@@ -182,7 +182,7 @@ async function main() {
         data: {
           restaurantId: restaurant.id,
           tableNumber: n,
-          uniqueCode: `bonpainer-t${n}-${Math.random().toString(36).slice(2, 8)}`,
+          uniqueCode: `hungryhabibi-t${n}-${Math.random().toString(36).slice(2, 8)}`,
           active: true,
         },
       });
@@ -219,7 +219,7 @@ async function main() {
   }
 
   console.log(`Seeded ${MENU.length} categories, ${itemCount} items`);
-  console.log("Admin login: admin@bonpainer.com / password123");
+  console.log("Admin login: admin@hungryhabibi.com / password123");
 }
 
 async function withRetry<T>(label: string, fn: () => Promise<T>, attempts = 5): Promise<T> {
@@ -236,7 +236,7 @@ async function withRetry<T>(label: string, fn: () => Promise<T>, attempts = 5): 
   throw lastErr;
 }
 
-withRetry("seed-BonPainer-menu", main)
+withRetry("seed-hungryhabibi-menu", main)
   .catch((err) => {
     console.error(err);
     process.exitCode = 1;

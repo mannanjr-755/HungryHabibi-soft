@@ -1,8 +1,8 @@
-# BonPainer — Restaurant Kitchen Dashboard
+# Hungry Habibi — Restaurant Kitchen Dashboard
 
-Staff dashboard for the **BonPainer** brand. Customer home + digital menu live in a
-separate project (`restaurantorder`); this app is the kitchen/staff side and
-talks to the same PostgreSQL database so menu orders land on the dashboard.
+Staff dashboard for the **Hungry Habibi** brand. Customer home + digital menu live in a
+separate project; this app is the kitchen/staff side and talks to the same PostgreSQL
+database so menu orders land on the dashboard.
 
 ## Stack
 
@@ -28,26 +28,26 @@ npm run db:seed     # demo restaurant, admin user, tables, menu
 
 ## Admin login
 
-| Email                 | Password    |
-| --------------------- | ----------- |
-| `admin@bonpainer.com` | `password123` |
+| Email                     | Password    |
+| ------------------------- | ----------- |
+| `admin@hungryhabibi.com`  | `password123` |
 
-Production: **https://BonPainer-soft.vercel.app**
+Production: **https://hungryhabibi.vercel.app**
 
 ## Environment
 
 `frontend/.env` holds `DATABASE_URL` so both the Prisma CLI and Next.js resolve
-the same value. `frontend/.env.local` holds the rest.
+the same value.
 
-| Variable              | Purpose                                              |
-| --------------------- | ---------------------------------------------------- |
-| `DATABASE_URL`        | Neon PostgreSQL connection string                     |
-| `AUTH_SECRET`         | Session JWT signing secret (`npx auth secret`)        |
-| `AUTH_URL`            | Canonical app URL (Vercel sets this automatically)    |
-| `AUTH_TRUST_HOST`     | Trust `X-Forwarded-Host` behind Vercel                |
-| `REPORTS_PIN`         | PIN guarding the Reports page                         |
-| `NEXT_PUBLIC_APP_URL` | Public URL of this app                                |
-| `NEXT_PUBLIC_SITE_URL`| Deployed Digital Menu URL                              |
+| Variable               | Purpose                                           |
+| ---------------------- | ------------------------------------------------- |
+| `DATABASE_URL`         | Neon PostgreSQL connection string                 |
+| `AUTH_SECRET`          | Session JWT signing secret (`npx auth secret`)    |
+| `AUTH_URL`             | Canonical app URL (Vercel sets this automatically)|
+| `AUTH_TRUST_HOST`      | Trust `X-Forwarded-Host` behind Vercel            |
+| `REPORTS_PIN`          | PIN guarding the Reports page                     |
+| `NEXT_PUBLIC_APP_URL`  | Public URL of this app                            |
+| `NEXT_PUBLIC_SITE_URL` | Deployed Digital Menu URL                         |
 
 ## Notes
 
@@ -64,3 +64,10 @@ the same value. `frontend/.env.local` holds the rest.
 
 `desktop/` packages the dashboard as a Windows Electron app.
 `npm run icons` in `desktop/` regenerates the Windows icons from `frontend/public/logo.png`.
+
+## Deploy (Vercel)
+
+Root Directory: **`frontend`**
+
+Required env vars on Vercel: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`,
+`AUTH_TRUST_HOST`, `REPORTS_PIN`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SITE_URL`.

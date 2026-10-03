@@ -135,6 +135,7 @@ export async function POST(request: Request) {
           orderNumber,
           customerName: "Walking Customer",
           orderType: "TAKE_AWAY",
+          orderSource: "TABLE",
           status: saveToReports ? "REPORTED" : "NEW",
           total,
           items: {
@@ -187,6 +188,16 @@ export async function GET(request: Request) {
     include: {
       items: true,
       table: true,
+      waitingCustomer: {
+        select: {
+          id: true,
+          waitingNumber: true,
+          peopleCount: true,
+          status: true,
+          tableStatus: true,
+          assignedTableId: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
     take: 100,

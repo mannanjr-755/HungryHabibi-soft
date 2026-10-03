@@ -1,5 +1,5 @@
 {
-  "name": "BonPainer-nfc-soft",
+  "name": "hungryhabibi-soft",
   "version": "0.1.0",
   "private": true,
   "workspaces": [
@@ -15,5 +15,5 @@
     "db:studio": "npm run db:studio --workspace=frontend",
     "db:reset": "npm run db:reset --workspace=frontend"
   },
-  "description": "Staff dashboard moved out of `restaurantorder`. Customer home + digital menu stay in `restaurantorder`."
+  "description": "Hungry Habibi staff kitchen dashboard (CRM/POS)."
 }

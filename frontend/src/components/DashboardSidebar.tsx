@@ -23,6 +23,7 @@ export type NavKey =
   | "tables"
   | "menu"
   | "walking-customer"
+  | "waiting-customers"
   | "categories"
   | "customers"
   | "staff"
@@ -42,6 +43,12 @@ const nav: { href: string; label: string; icon: LucideIcon; key: string }[] = [
     label: "Walking Customer",
     icon: Footprints,
     key: "walking-customer",
+  },
+  {
+    href: "/dashboard/waiting-customers",
+    label: "Waiting Customers",
+    icon: Users,
+    key: "waiting-customers",
   },
   { href: "/dashboard/tables", label: "Tables", icon: Table2, key: "tables" },
   { href: "/dashboard/menu", label: "Menu", icon: UtensilsCrossed, key: "menu" },
@@ -107,7 +114,7 @@ export function DashboardSidebar({
         <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-[var(--gold)]/40 shadow-[var(--shadow)]">
           <Image
             src="/logo.png"
-            alt="BonPainer"
+            alt="Hungry Habibi"
             width={40}
             height={40}
             className="h-full w-full object-cover"

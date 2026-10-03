@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/session";
+import { serveReadyOrder } from "@/lib/serviceFloor";
 
 /** List recent table service requests (Call Waiter / Request Bill) for CRM notifications */
 export async function GET(request: Request) {
@@ -69,6 +70,29 @@ export async function PATCH(request: Request) {
 
     if (!existing) {
       return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    }
+
+    if (existing.type === "SERVE" && existing.orderId) {
+      const served = await serveReadyOrder(session.user.restaurantId, existing.orderId);
+      if ("error" in served && served.error) {
+        return NextResponse.json({ error: served.error }, { status: served.status });
+      }
+      return NextResponse.json({
+        request: {
+          id: existing.id,
+          type: existing.type,
+          message: existing.message,
+          status: "COMPLETED",
+          tableNumber: (
+            await prisma.table.findUnique({
+              where: { id: existing.tableId },
+              select: { tableNumber: true },
+            })
+          )?.tableNumber,
+          createdAt: existing.createdAt.toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      });
     }
 
     const updated = await prisma.tableRequest.update({

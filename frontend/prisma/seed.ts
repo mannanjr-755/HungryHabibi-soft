@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Seeding BonPainer demo data...");
+  console.log("Seeding Hungry Habibi demo data...");
 
   // Clean existing data for a clean demo
   await prisma.orderItem.deleteMany();
@@ -17,10 +17,10 @@ async function main() {
 
   const passwordHash = await bcrypt.hash("password123", 10);
 
-  const fouram = await prisma.restaurant.create({
+  const restaurant = await prisma.restaurant.create({
     data: {
-      name: "BonPainer",
-      slug: "bonpainer",
+      name: "Hungry Habibi",
+      slug: "hungryhabibi",
       logo: "/logo.png",
       coverImage:
         "https://images.unsplash.com/photo-1558030006-450675393462?w=1400&h=700&fit=crop",
@@ -47,11 +47,11 @@ async function main() {
 
   await prisma.user.create({
     data: {
-      email: "admin@bonpainer.com",
+      email: "admin@hungryhabibi.com",
       passwordHash,
       name: "Admin",
       role: "ADMIN",
-      restaurantId: fouram.id,
+      restaurantId: restaurant.id,
     },
   });
 
@@ -59,9 +59,9 @@ async function main() {
   for (let n = 1; n <= 12; n++) {
     await prisma.table.create({
       data: {
-        restaurantId: fouram.id,
+        restaurantId: restaurant.id,
         tableNumber: n,
-        uniqueCode: `bonpainer-t${n}-${Math.random().toString(36).slice(2, 8)}`,
+        uniqueCode: `hungryhabibi-t${n}-${Math.random().toString(36).slice(2, 8)}`,
         active: true,
       },
     });
@@ -188,7 +188,7 @@ async function main() {
   for (const cat of categories) {
     const category = await prisma.menuCategory.create({
       data: {
-        restaurantId: fouram.id,
+        restaurantId: restaurant.id,
         name: cat.name,
         sortOrder: sort++,
       },
@@ -196,7 +196,7 @@ async function main() {
     for (const item of cat.items) {
       await prisma.menuItem.create({
         data: {
-          restaurantId: fouram.id,
+          restaurantId: restaurant.id,
           categoryId: category.id,
           name: item.name,
           description: item.description,
@@ -238,8 +238,8 @@ async function main() {
   });
 
   console.log("Done!");
-  console.log("Customer menu: /r/bonpainer/t/12");
-  console.log("Admin login: admin@bonpainer.com / password123");
+  console.log("Customer menu: /r/hungryhabibi/t/12");
+  console.log("Admin login: admin@hungryhabibi.com / password123");
 }
 
 main()

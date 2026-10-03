@@ -102,7 +102,10 @@ export async function GET(request: Request) {
     id: o.id,
     orderNumber: o.orderNumber,
     customerName: o.customerName,
-    tableNumber: o.customerName === "Walking Customer" ? null : o.table.tableNumber,
+    tableNumber:
+      o.customerName === "Walking Customer" || o.orderSource === "WAITING_CUSTOMER"
+        ? null
+        : (o.table?.tableNumber ?? null),
     status: o.status,
     total: o.total,
     createdAt: o.createdAt,

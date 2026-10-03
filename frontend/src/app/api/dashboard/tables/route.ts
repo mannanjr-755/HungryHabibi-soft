@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { BRAND_SLUG, tableMenuUrl, waitingCustomerMenuUrl } from "@/lib/brand";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/session";
-
-const CUSTOMER_MENU_URL = "https://BonPainer-menu.vercel.app";
 
 export async function GET() {
   const session = await requireStaff();
@@ -14,6 +13,26 @@ export async function GET() {
   const tables = await prisma.table.findMany({
     where: { restaurantId: session.user.restaurantId },
     orderBy: { tableNumber: "asc" },
+    include: {
+      waitingAssignments: {
+        where: { status: { in: ["WAITING", "RESERVED"] } },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          customerName: true,
+          waitingNumber: true,
+          status: true,
+          tableStatus: true,
+        },
+      },
+      orders: {
+        where: { status: { in: ["NEW", "ACCEPTED", "PREPARING", "READY"] }, orderSource: "TABLE" },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { id: true, orderNumber: true, status: true, customerName: true },
+      },
+    },
   });
 
   const restaurant = await prisma.restaurant.findUnique({
@@ -21,7 +40,34 @@ export async function GET() {
     select: { slug: true },
   });
 
-  return NextResponse.json({ tables, slug: restaurant?.slug });
+  const slug = restaurant?.slug || BRAND_SLUG;
+
+  return NextResponse.json({
+    tables: tables.map((t) => {
+      const activeOrder = t.orders[0] ?? null;
+      const reservation = t.waitingAssignments[0] ?? null;
+      let displayStatus = t.status || "AVAILABLE";
+      if (activeOrder) displayStatus = "OCCUPIED";
+      else if (reservation?.tableStatus === "RESERVED" || reservation?.status === "RESERVED") {
+        displayStatus = "RESERVED";
+      } else if (reservation?.status === "WAITING") {
+        displayStatus = "WAITING";
+      }
+
+      return {
+        id: t.id,
+        tableNumber: t.tableNumber,
+        uniqueCode: t.uniqueCode,
+        active: t.active,
+        status: displayStatus,
+        menuUrl: tableMenuUrl(t.tableNumber, slug),
+        activeOrder,
+        reservation,
+      };
+    }),
+    slug,
+    waitingCustomerUrl: waitingCustomerMenuUrl(slug),
+  });
 }
 
 const createSchema = z.object({
@@ -69,11 +115,12 @@ export async function POST(request: Request) {
     },
   });
 
+  const url = tableMenuUrl(table.tableNumber, restaurant.slug);
   return NextResponse.json(
     {
       table,
-      url: `${CUSTOMER_MENU_URL}/r/${restaurant.slug}/t/${table.tableNumber}`,
-      absoluteUrl: `${CUSTOMER_MENU_URL}/r/${restaurant.slug}/t/${table.tableNumber}`,
+      url,
+      absoluteUrl: url,
     },
     { status: 201 }
   );

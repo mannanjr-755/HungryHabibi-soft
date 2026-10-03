@@ -2,8 +2,8 @@ const { app, BrowserWindow, shell, Menu } = require("electron");
 const fs = require("fs");
 const path = require("path");
 
-/** Production BonPainer dashboard — same live deployment used by the web app. */
-const CRM_URL = process.env.CRM_DESKTOP_URL || "https://BonPainer-soft.vercel.app";
+/** Production Hungry Habibi dashboard — same live deployment used by the web app. */
+const CRM_URL = process.env.CRM_DESKTOP_URL || "https://hungryhabibi.vercel.app";
 
 let mainWindow = null;
 
@@ -32,7 +32,7 @@ function offlineHtml(detail) {
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>BonPainer CRM</title>
+  <title>Hungry Habibi CRM</title>
   <style>
     html,body{margin:0;height:100%;font-family:Segoe UI,sans-serif;background:#101820;color:#f2ede3;}
     main{min-height:100%;display:flex;align-items:center;justify-content:center;padding:32px;text-align:center;}
@@ -47,7 +47,7 @@ function offlineHtml(detail) {
 <body>
   <main>
     <div class="card">
-      <h1>BonPainer CRM</h1>
+      <h1>Hungry Habibi CRM</h1>
       <p>The desktop app could not load the live CRM. Check your internet connection, then try again.</p>
       <code>${safeDetail}</code>
       <button onclick="location.reload()">Retry</button>
@@ -65,7 +65,7 @@ function createWindow() {
     height: 900,
     minWidth: 1100,
     minHeight: 700,
-    title: "BonPainer CRM",
+    title: "Hungry Habibi CRM",
     backgroundColor: "#101820",
     autoHideMenuBar: true,
     show: false,
@@ -113,7 +113,7 @@ function createWindow() {
   });
 
   mainWindow.loadURL(CRM_URL, {
-    userAgent: `${mainWindow.webContents.getUserAgent()} BonPainerCRMDesktop/1.0`,
+    userAgent: `${mainWindow.webContents.getUserAgent()} HungryHabibiCRMDesktop/1.0`,
   });
 
   mainWindow.on("closed", () => {
@@ -134,7 +134,7 @@ if (!gotLock) {
 
   app.whenReady().then(() => {
     if (process.platform === "win32") {
-      app.setAppUserModelId("com.BonPainer.crm");
+      app.setAppUserModelId("com.hungryhabibi.crm");
     }
     createWindow();
 

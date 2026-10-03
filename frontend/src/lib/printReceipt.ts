@@ -81,7 +81,7 @@ function orderSubtotal(order: ReceiptOrder): number {
 
 export type ReceiptPaperWidth = 58 | 80;
 
-const PAPER_STORAGE_KEY = "BonPainer-receipt-paper-mm";
+const PAPER_STORAGE_KEY = "hungryhabibi-receipt-paper-mm";
 
 export function getReceiptPaperWidth(): ReceiptPaperWidth {
   if (typeof window === "undefined") return 58;
@@ -380,7 +380,7 @@ export function buildKotHtml(
 }
 
 /**
- * Inline the BonPainer logo as a data URI. A data URI guarantees the print window
+ * Inline the Hungry Habibi logo as a data URI. A data URI guarantees the print window
  * never shows a missing-image box, and it loads synchronously enough that the
  * logo is always present on the printed receipt.
  */

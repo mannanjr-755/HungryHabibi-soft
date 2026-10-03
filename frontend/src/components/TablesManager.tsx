@@ -1,35 +1,51 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ExternalLink, Users } from "lucide-react";
 import { toast } from "@/components/ToastProvider";
+import { BRAND_SLUG, tableMenuUrl, waitingCustomerMenuUrl } from "@/lib/brand";
 
 type TableRow = {
   id: string;
   tableNumber: number;
   uniqueCode: string;
   active: boolean;
+  status?: string;
+  menuUrl?: string;
+  activeOrder?: { id: string; orderNumber: string; status: string; customerName: string } | null;
+  reservation?: {
+    id: string;
+    customerName: string;
+    waitingNumber: number;
+    status: string;
+    tableStatus: string;
+  } | null;
 };
 
-const CUSTOMER_MENU_URL = "https://BonPainer-menu.vercel.app";
+const STATUS_STYLES: Record<string, string> = {
+  AVAILABLE: "bg-[var(--success)]/15 text-[var(--success)]",
+  RESERVED: "bg-[var(--info)]/15 text-[var(--info)]",
+  OCCUPIED: "bg-[var(--orange)]/15 text-[var(--orange)]",
+  WAITING: "bg-[var(--gold)]/20 text-[var(--gold-bright)]",
+};
 
 export function TablesManager() {
   const [tables, setTables] = useState<TableRow[]>([]);
-  const [slug, setSlug] = useState("");
+  const [slug, setSlug] = useState(BRAND_SLUG);
+  const [waitingUrl, setWaitingUrl] = useState(waitingCustomerMenuUrl());
   const [tableNumber, setTableNumber] = useState("");
-  const [origin, setOrigin] = useState(CUSTOMER_MENU_URL);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/dashboard/tables");
     const data = await res.json();
     setTables(data.tables ?? []);
-    setSlug(data.slug ?? "");
+    setSlug(data.slug ?? BRAND_SLUG);
+    setWaitingUrl(data.waitingCustomerUrl ?? waitingCustomerMenuUrl(data.slug ?? BRAND_SLUG));
   }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       load();
-      // NFC/QR must open the Digital Menu app directly (not the CRM host).
-      setOrigin(CUSTOMER_MENU_URL);
     }, 0);
     return () => clearTimeout(timer);
   }, [load]);
@@ -46,22 +62,48 @@ export function TablesManager() {
       toast.error(data.error || "Could not create table.");
       return;
     }
-    toast.success(`Table ${data.table.tableNumber} created. URL: ${data.url}`);
+    toast.success(`Table ${data.table.tableNumber} created.`);
     setTableNumber("");
     load();
   }
 
-  function tableUrl(n: number) {
-    return `${origin}/r/${slug}/t/${n}`;
+  function openMenu(n: number) {
+    return tables.find((t) => t.tableNumber === n)?.menuUrl || tableMenuUrl(n, slug);
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight text-white">Tables</h1>
-      <p className="mt-1 text-sm text-[#a39b8c]">
-        Each table has a URL for NFC cards and QR codes. The card only stores this URL — not the
-        menu.
+      <h1 className="font-display text-2xl tracking-tight text-[var(--text)] sm:text-3xl">
+        Tables
+      </h1>
+      <p className="mt-1 text-sm text-[var(--text-muted)]">
+        Open each table&apos;s Hungry Habibi menu for NFC cards and QR codes. Waiting customers use a
+        separate menu without a table number.
       </p>
+
+      <a
+        href={waitingUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-6 flex flex-col gap-3 rounded-2xl border border-[var(--gold)]/40 bg-gradient-to-br from-[var(--gold)]/15 to-[var(--bg-card)] p-5 shadow-[var(--shadow)] transition hover:border-[var(--gold)] sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div className="flex items-start gap-3">
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--gold)]/20 text-[var(--gold-bright)]">
+            <Users className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="font-display text-lg text-[var(--gold-bright)]">Waiting Customer</p>
+            <p className="mt-0.5 text-sm text-[var(--text-muted)]">
+              Open the waitlist menu — no table number assigned.
+            </p>
+            <p className="mt-2 break-all font-mono text-[11px] text-[var(--text-dim)]">{waitingUrl}</p>
+          </div>
+        </div>
+        <span className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--gold)] px-4 py-2.5 text-sm font-semibold text-[#101820]">
+          Open Menu
+          <ExternalLink className="h-4 w-4" />
+        </span>
+      </a>
 
       <form onSubmit={createTable} className="mt-6 flex flex-wrap gap-2">
         <input
@@ -71,45 +113,73 @@ export function TablesManager() {
           value={tableNumber}
           onChange={(e) => setTableNumber(e.target.value)}
           placeholder="Table number"
-          className="w-40 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-[#c6a15b]"
+          className="w-40 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-sm outline-none focus:border-[var(--gold)]"
         />
         <button
           type="submit"
-          className="rounded-xl bg-[#c6a15b] px-4 py-2 text-sm font-semibold text-[#000000]"
+          className="rounded-xl bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#101820]"
         >
           Create table
         </button>
       </form>
 
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-white/10">
-        <table className="w-full min-w-[480px] text-left text-sm">
-          <thead className="border-b border-white/10 bg-white/[0.03] text-[#a39b8c]">
-            <tr>
-              <th className="px-4 py-3 font-medium">Table</th>
-              <th className="px-4 py-3 font-medium">Customer URL (NFC / QR)</th>
-              <th className="px-4 py-3 font-medium">Code</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tables.map((t) => (
-              <tr key={t.id} className="border-b border-white/5">
-                <td className="px-4 py-3 font-medium text-white">{t.tableNumber}</td>
-                <td className="px-4 py-3">
-                  <a
-                    href={tableUrl(t.tableNumber)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[#ddbe7e] underline-offset-2 hover:underline"
-                  >
-                    {tableUrl(t.tableNumber)}
-                  </a>
-                </td>
-                <td className="px-4 py-3 font-mono text-xs text-[#a39b8c]">{t.uniqueCode}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {tables.map((t) => {
+          const status = t.status || "AVAILABLE";
+          const url = openMenu(t.tableNumber);
+          return (
+            <article
+              key={t.id}
+              className="flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 shadow-[var(--shadow)]"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-display text-xl text-[var(--text)]">Table {t.tableNumber}</p>
+                  <p className="mt-0.5 font-mono text-[11px] text-[var(--text-dim)]">{t.uniqueCode}</p>
+                </div>
+                <span
+                  className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                    STATUS_STYLES[status] || STATUS_STYLES.AVAILABLE
+                  }`}
+                >
+                  {status.replace(/_/g, " ")}
+                </span>
+              </div>
+
+              {t.activeOrder && (
+                <p className="mt-3 rounded-lg bg-[var(--bg-soft)] px-2.5 py-2 text-xs text-[var(--text-muted)]">
+                  Active: {t.activeOrder.orderNumber} · {t.activeOrder.customerName}
+                </p>
+              )}
+              {t.reservation && (
+                <p className="mt-2 rounded-lg bg-[var(--gold)]/10 px-2.5 py-2 text-xs text-[var(--gold-bright)]">
+                  Waiting #{t.reservation.waitingNumber} · {t.reservation.customerName}
+                </p>
+              )}
+
+              <p className="mt-3 break-all font-mono text-[10px] leading-relaxed text-[var(--text-dim)]">
+                {url}
+              </p>
+
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--gold)]/50 bg-[var(--gold)]/10 px-3 py-2.5 text-sm font-semibold text-[var(--gold-bright)] transition hover:bg-[var(--gold)]/20"
+              >
+                Open Menu
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </article>
+          );
+        })}
       </div>
+
+      {tables.length === 0 && (
+        <p className="mt-8 rounded-2xl border border-dashed border-[var(--border)] px-4 py-10 text-center text-sm text-[var(--text-dim)]">
+          No tables yet. Create table 1 to get started.
+        </p>
+      )}
     </div>
   );
 }

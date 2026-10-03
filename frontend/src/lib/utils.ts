@@ -3,6 +3,7 @@ export const ORDER_STATUSES = [
   "ACCEPTED",
   "PREPARING",
   "READY",
+  "SERVED",
   "COMPLETED",
   "REPORTED",
 ] as const;
@@ -14,6 +15,7 @@ export const STATUS_LABELS: Record<OrderStatus, string> = {
   ACCEPTED: "Accepted",
   PREPARING: "Preparing",
   READY: "Ready",
+  SERVED: "Served",
   COMPLETED: "Completed",
   REPORTED: "Reported",
 };
@@ -23,14 +25,20 @@ export function isReportedOrder(status: string): boolean {
   return status === "COMPLETED" || status === "REPORTED";
 }
 
-/** Next allowed status in the kitchen flow, or null if already completed/reported */
+/** Next kitchen step. Serving and billing are explicit actions, not an automatic jump. */
 export function nextStatus(current: string): OrderStatus | null {
-  if (current === "COMPLETED" || current === "REPORTED") return null;
+  if (
+    current === "READY" ||
+    current === "SERVED" ||
+    current === "COMPLETED" ||
+    current === "REPORTED"
+  ) {
+    return null;
+  }
   const index = ORDER_STATUSES.indexOf(current as OrderStatus);
   if (index < 0 || index >= ORDER_STATUSES.length - 1) return null;
   const next = ORDER_STATUSES[index + 1];
-  // Kitchen advance never jumps into REPORTED — that is the Save action.
-  if (next === "REPORTED") return null;
+  if (next === "REPORTED" || next === "SERVED") return null;
   return next;
 }
 

@@ -37,6 +37,7 @@ const STATUS_COLOR: Record<string, string> = {
   ACCEPTED: "#f97316",
   PREPARING: "#eab308",
   READY: "#22c55e",
+  SERVED: "#14b8a6",
   COMPLETED: "#3b82f6",
   REPORTED: "#6366f1",
 };

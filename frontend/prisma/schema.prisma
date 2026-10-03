@@ -1,6 +1,4 @@
-// Lexcore Restaurant Ordering — Phase 1 schema
-// Local development uses SQLite (file database — no install needed).
-// For production PostgreSQL: change provider to "postgresql" and set DATABASE_URL.
+// Hungry Habibi — restaurant POS / CRM schema (PostgreSQL via DATABASE_URL)
 
 generator client {
   provider = "prisma-client-js"
@@ -27,14 +25,16 @@ model Restaurant {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  users         User[]
-  tables        Table[]
-  categories    MenuCategory[]
-  menuItems     MenuItem[]
-  orders        Order[]
-  customers     Customer[]
-  payments      Payment[]
-  tableRequests TableRequest[]
+  users             User[]
+  tables            Table[]
+  categories        MenuCategory[]
+  menuItems         MenuItem[]
+  orders            Order[]
+  customers         Customer[]
+  payments          Payment[]
+  tableRequests     TableRequest[]
+  waitingCustomers  WaitingCustomer[]
+  visits            Visit[]
 }
 
 model Customer {
@@ -92,31 +92,94 @@ model Table {
   tableNumber  Int
   uniqueCode   String     @unique
   active       Boolean    @default(true)
+  /// AVAILABLE | RESERVED | OCCUPIED | WAITING
+  status       String     @default("AVAILABLE")
   createdAt    DateTime   @default(now())
 
-  orders        Order[]
-  tableRequests TableRequest[]
+  orders             Order[]
+  tableRequests      TableRequest[]
+  waitingAssignments WaitingCustomer[]
+  visits             Visit[]
 
   @@unique([restaurantId, tableNumber])
 }
 
-/// Customer service request from Digital Menu (Call Waiter / Request Bill)
+/// Waitlist / reservation intake from /r/{slug}/waiting-customer
+model WaitingCustomer {
+  id               String     @id @default(cuid())
+  restaurantId     String
+  restaurant       Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customerName     String
+  customerPhone    String
+  peopleCount      Int        @default(1)
+  waitingNumber    Int
+  tableRequirement String?
+  notes            String?
+  /// WAITING | CALLED | RESERVED | SEATED | CANCELLED | COMPLETED
+  status           String     @default("WAITING")
+  /// WAITING_FOR_TABLE | RESERVED | OCCUPIED
+  tableStatus      String     @default("WAITING_FOR_TABLE")
+  assignedTableId  String?
+  assignedTable    Table?     @relation(fields: [assignedTableId], references: [id], onDelete: SetNull)
+  reservedAt       DateTime?
+  assignedAt       DateTime?
+  orderId          String?    @unique
+  order            Order?     @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  visitId          String?    @unique
+  visit            Visit?     @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@unique([restaurantId, waitingNumber])
+  @@index([restaurantId, status])
+  @@index([restaurantId, createdAt])
+}
+
+/// Customer service request from Digital Menu (Call Waiter / Request Bill / Serve)
 model TableRequest {
   id           String     @id @default(cuid())
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   tableId      String
   table        Table      @relation(fields: [tableId], references: [id], onDelete: Cascade)
-  /// WAITER | BILL
+  visitId      String?
+  visit        Visit?     @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  orderId      String?
+  order        Order?     @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  /// WAITER | BILL | SERVE
   type         String
   message      String
-  /// PENDING | ACKNOWLEDGED
+  /// PENDING | ACKNOWLEDGED | COMPLETED
   status       String     @default("PENDING")
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
   @@index([restaurantId, status, createdAt])
   @@index([restaurantId, createdAt])
+  @@index([visitId, type, status])
+}
+
+/// One phone session at one table. A new visit starts only after the previous one is completed.
+model Visit {
+  id            String    @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  tableId       String
+  table         Table     @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  sessionToken  String    @unique
+  /// ACTIVE | COMPLETED | CANCELLED
+  status        String    @default("ACTIVE")
+  guestLabel    String    @default("Guest")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  completedAt   DateTime?
+
+  orders          Order[]
+  tableRequests   TableRequest[]
+  waitingCustomer WaitingCustomer?
+
+  @@index([restaurantId, tableId, status])
+  @@index([restaurantId, status])
 }
 
 model MenuCategory {
@@ -159,8 +222,9 @@ model Order {
   id            String     @id @default(cuid())
   restaurantId  String
   restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  tableId       String
-  table         Table      @relation(fields: [tableId], references: [id])
+  /// Optional for WAITING_CUSTOMER orders (no table yet)
+  tableId       String?
+  table         Table?     @relation(fields: [tableId], references: [id])
   customerId    String?
   customer      Customer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
   orderNumber     String
@@ -171,19 +235,27 @@ model Order {
   specialRequest  String?
   // DINE_IN | TAKE_AWAY
   orderType       String     @default("DINE_IN")
-  // NEW | ACCEPTED | PREPARING | READY | COMPLETED
+  /// TABLE | WAITING_CUSTOMER
+  orderSource     String     @default("TABLE")
+  // NEW | ACCEPTED | PREPARING | READY | SERVED | COMPLETED | REPORTED
   status          String     @default("NEW")
   total           Float
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
+  visitId         String?
+  visit           Visit?     @relation(fields: [visitId], references: [id], onDelete: SetNull)
 
-  items    OrderItem[]
-  payments Payment[]
+  items            OrderItem[]
+  payments         Payment[]
+  waitingCustomer  WaitingCustomer?
+  tableRequests    TableRequest[]
 
   @@unique([restaurantId, orderNumber])
   @@index([restaurantId, status])
   @@index([restaurantId, createdAt])
   @@index([restaurantId, sessionId])
+  @@index([restaurantId, orderSource])
+  @@index([visitId])
 }
 
 model OrderItem {

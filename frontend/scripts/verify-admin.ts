@@ -5,31 +5,30 @@ const prisma = new PrismaClient();
 
 async function main() {
   const u = await prisma.user.findUnique({
-    where: { email: "admin@bonpainer.com" },
+    where: { email: "admin@hungryhabibi.com" },
     include: { restaurant: true },
   });
+
   if (!u) {
-    console.log("NO USER");
+    console.error("FAIL: admin@hungryhabibi.com not found");
     process.exit(1);
   }
+
   const passwordOk = await bcrypt.compare("password123", u.passwordHash);
-  const tables = await prisma.table.count({ where: { restaurantId: u.restaurantId } });
-  console.log(
-    JSON.stringify(
-      {
-        email: u.email,
-        role: u.role,
-        active: u.active,
-        passwordOk,
-        slug: u.restaurant.slug,
-        name: u.restaurant.name,
-        tables,
-      },
-      null,
-      2
-    )
-  );
-  if (!passwordOk || u.restaurant.slug !== "bonpainer") process.exit(1);
+  console.log({
+    email: u.email,
+    active: u.active,
+    role: u.role,
+    restaurant: u.restaurant.name,
+    slug: u.restaurant.slug,
+    passwordOk,
+  });
+
+  if (!passwordOk || u.restaurant.slug !== "hungryhabibi" || !u.active) {
+    process.exit(1);
+  }
+
+  console.log("OK");
 }
 
 main()

@@ -1,9 +1,9 @@
 {
-  "name": "BonPainer-crm-desktop",
+  "name": "hungryhabibi-crm-desktop",
   "version": "1.0.0",
   "private": true,
-  "description": "BonPainer CRM desktop application",
-  "author": "BonPainer",
+  "description": "Hungry Habibi CRM desktop application",
+  "author": "Hungry Habibi",
   "main": "main.js",
   "scripts": {
     "icons": "node scripts/generate-icons.js",
@@ -13,9 +13,9 @@
     "dist:portable": "electron-builder --win portable"
   },
   "build": {
-    "appId": "com.BonPainer.crm",
-    "productName": "BonPainer CRM",
-    "copyright": "Copyright © BonPainer",
+    "appId": "com.hungryhabibi.crm",
+    "productName": "Hungry Habibi CRM",
+    "copyright": "Copyright © HungryHabibi",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -41,14 +41,14 @@
         }
       ],
       "icon": "build/icon.ico",
-      "artifactName": "BonPainer-CRM-Setup-${version}.${ext}"
+      "artifactName": "HungryHabibi-CRM-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "BonPainer CRM",
+      "shortcutName": "Hungry Habibi CRM",
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico",
       "installerHeaderIcon": "build/icon.ico",

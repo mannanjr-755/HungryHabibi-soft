@@ -4,11 +4,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "BonPainer",
-    template: "%s · BonPainer",
+    default: "Hungry Habibi",
+    template: "%s · Hungry Habibi",
   },
   description:
-    "BonPainer — Restaurant, cafe & store kitchen dashboard.",
+    "Hungry Habibi — Restaurant, cafe & store kitchen dashboard.",
   icons: {
     icon: [{ url: "/logo.png", type: "image/png" }],
     apple: [{ url: "/logo.png", type: "image/png" }],

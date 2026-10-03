@@ -78,7 +78,7 @@ export async function GET(
     orderNumber: o.orderNumber,
     status: o.status,
     total: o.total,
-    tableNumber: o.table.tableNumber,
+    tableNumber: o.table?.tableNumber ?? null,
     createdAt: o.createdAt,
     itemCount: o.items.length,
   }));

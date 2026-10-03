@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { BRAND_NAME } from "@/lib/brand";
 
 type BrandLogoProps = {
   size?: "sm" | "md" | "lg" | "hero";
@@ -6,7 +7,7 @@ type BrandLogoProps = {
   className?: string;
 };
 
-  const sizes = {
+const sizes = {
   sm: { box: "h-9 w-9", img: 36 },
   md: { box: "h-10 w-10", img: 40 },
   lg: { box: "h-14 w-14", img: 56 },
@@ -27,7 +28,7 @@ export function BrandLogo({
       >
         <Image
           src="/logo.png"
-          alt="BonPainer"
+          alt={BRAND_NAME}
           width={s.img}
           height={s.img}
           className={
@@ -41,7 +42,7 @@ export function BrandLogo({
       {showWordmark && (
         <>
           <span className="font-display mt-3 text-3xl text-[var(--gold-bright)]">
-            BonPainer
+            {BRAND_NAME}
           </span>
           <span className="mt-1 text-xs uppercase tracking-[0.25em] text-[var(--text-dim)]">
             Restaurant Kitchen Dashboard

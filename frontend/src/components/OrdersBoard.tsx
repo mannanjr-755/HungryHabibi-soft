@@ -26,9 +26,17 @@ type Order = {
   specialRequest: string | null;
   status: string;
   orderType: string;
+  orderSource?: string;
   total: number;
   createdAt: string;
-  table: { tableNumber: number };
+  table: { tableNumber: number } | null;
+  waitingCustomer?: {
+    id: string;
+    waitingNumber: number;
+    peopleCount: number;
+    status: string;
+    tableStatus: string;
+  } | null;
   items: OrderItem[];
 };
 
@@ -56,7 +64,14 @@ const COLUMNS: { key: OrderStatus[]; title: string; color: string; btn: string; 
     btn: "Mark as Served",
     btnClass: "bg-[#22c55e] hover:bg-[#4ade80] text-black",
   },
-    {
+  {
+    key: ["SERVED"],
+    title: "Served",
+    color: "text-[#14b8a6]",
+    btn: "Served",
+    btnClass: "bg-[#14b8a6] text-black",
+  },
+  {
       key: ["COMPLETED"],
       title: "Completed",
       color: "text-[#3b82f6]",
@@ -200,7 +215,8 @@ export function OrdersBoard() {
         (o.customerPhone ?? "").toLowerCase().includes(q) ||
         (o.customerEmail ?? "").toLowerCase().includes(q) ||
         (o.specialRequest ?? "").toLowerCase().includes(q) ||
-        String(o.table.tableNumber).includes(q) ||
+        String(o.table?.tableNumber ?? "").includes(q) ||
+        String(o.waitingCustomer?.waitingNumber ?? "").includes(q) ||
         o.status.toLowerCase().includes(q) ||
         (STATUS_LABELS[o.status as OrderStatus] ?? "").toLowerCase().includes(q) ||
         o.items.some((item) => item.itemName.toLowerCase().includes(q))
@@ -266,7 +282,7 @@ export function OrdersBoard() {
       } else if (status === "ACCEPTED") {
         body = { orderId, status: "PREPARING" };
       } else if (status === "READY") {
-        body = { orderId, status: "COMPLETED" };
+        body = { orderId, status: "SERVED" };
       }
 
       const res = await fetch("/api/dashboard/orders", {
@@ -448,8 +464,8 @@ export function OrdersBoard() {
     tables.length,
     new Set(
       orders
-        .filter((o) => !["COMPLETED"].includes(o.status))
-        .map((o) => o.table.tableNumber)
+        .filter((o) => !["COMPLETED", "REPORTED"].includes(o.status) && o.table)
+        .map((o) => o.table!.tableNumber)
     ).size
   );
   const available = Math.max(0, tables.length - occupiedEstimate);
@@ -477,9 +493,10 @@ export function OrdersBoard() {
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[#b9b2a5]">Table</span>
                 <span>
-                  {orderToDelete.customerName === "Walking Customer"
+                  {orderToDelete.orderSource === "WAITING_CUSTOMER" ||
+                  orderToDelete.customerName === "Walking Customer"
                     ? "—"
-                    : orderToDelete.table.tableNumber}
+                    : (orderToDelete.table?.tableNumber ?? "—")}
                 </span>
               </div>
               <div className="mt-2 flex items-center justify-between gap-3">
@@ -517,7 +534,9 @@ export function OrdersBoard() {
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c6a15b]">Edit Order</p>
                 <h3 className="text-lg font-semibold text-white">
                   {orderToEdit.orderNumber}
-                  {orderToEdit.customerName !== "Walking Customer" && (
+                  {orderToEdit.customerName !== "Walking Customer" &&
+                    orderToEdit.orderSource !== "WAITING_CUSTOMER" &&
+                    orderToEdit.table && (
                     <span className="ml-2 text-sm font-normal text-[#b9b2a5]">
                       Table {orderToEdit.table.tableNumber}
                     </span>
@@ -736,9 +755,11 @@ export function OrdersBoard() {
                         <div className="min-w-0">
                           <p className="truncate text-sm text-white">{o.orderNumber}</p>
                           <p className="truncate text-[11px] text-[#b9b2a5]">
-                            {o.customerName === "Walking Customer"
-                              ? o.customerName
-                              : `${o.customerName} · Table ${o.table.tableNumber}`}
+                            {o.orderSource === "WAITING_CUSTOMER"
+                              ? `${o.customerName} · Waiting #${o.waitingCustomer?.waitingNumber ?? "—"}`
+                              : o.customerName === "Walking Customer"
+                                ? o.customerName
+                                : `${o.customerName} · Table ${o.table?.tableNumber ?? "—"}`}
                           </p>
                         </div>
                         <span className="shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-[#b9b2a5]">
@@ -883,6 +904,11 @@ export function OrdersBoard() {
                       const nxt = nextStatus(order.status);
                       const isNew = order.status === "NEW";
                       const isWalkingCustomer = order.customerName === "Walking Customer";
+                      const isWaitingCustomer =
+                        order.orderSource === "WAITING_CUSTOMER" || Boolean(order.waitingCustomer);
+                      const tableLabel = order.table
+                        ? `B-${String(order.table.tableNumber).padStart(4, "0")}`
+                        : null;
                       const initials = order.customerName
                         .split(/\s+/)
                         .filter(Boolean)
@@ -892,7 +918,7 @@ export function OrdersBoard() {
                       return (
                         <article
                           key={order.id}
-                          className={`min-w-0 overflow-hidden rounded-xl border bg-[var(--bg-card)] p-3 shadow-[var(--shadow)] ${
+                          className={`min-w-0 overflow-hidden rounded-2xl border bg-[var(--bg-card)] p-3.5 shadow-[var(--shadow)] transition hover:border-[var(--gold)]/35 ${
                             isNew
                               ? "border-[var(--danger)]/50 shadow-[0_0_20px_rgba(239,68,68,0.12)]"
                               : "border-[var(--border)]"
@@ -900,16 +926,25 @@ export function OrdersBoard() {
                         >
                           <div className="flex min-w-0 items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="truncate font-semibold text-[var(--text)]">{order.orderNumber}</p>
-                              <p className="mt-0.5 truncate text-xs text-[var(--text-muted)]">
-                                {isWalkingCustomer
-                                  ? order.orderType === "TAKE_AWAY"
-                                    ? "Take Away"
-                                    : "Dine In"
-                                  : `Table ${order.table.tableNumber} · ${order.orderType === "TAKE_AWAY" ? "Take Away" : "Dine In"}`}
+                              <p className="truncate font-semibold tracking-tight text-[var(--text)]">
+                                {tableLabel || order.orderNumber}
                               </p>
+                              <p className="mt-0.5 truncate text-xs text-[var(--text-muted)]">
+                                {isWaitingCustomer
+                                  ? `Waiting #${order.waitingCustomer?.waitingNumber ?? "—"} · Waiting List`
+                                  : isWalkingCustomer
+                                    ? order.orderType === "TAKE_AWAY"
+                                      ? "Take Away"
+                                      : "Dine In"
+                                    : `Table ${order.table?.tableNumber ?? "—"} · ${order.orderType === "TAKE_AWAY" ? "Take Away" : "Dine In"}`}
+                              </p>
+                              {tableLabel && (
+                                <p className="mt-0.5 truncate text-[10px] text-[var(--text-dim)]">
+                                  {order.orderNumber}
+                                </p>
+                              )}
                             </div>
-                            <span className="shrink-0 rounded-md bg-[var(--bg-soft)] px-1.5 py-0.5 text-[10px] tabular-nums text-[var(--text-muted)]">
+                            <span className="shrink-0 rounded-lg bg-[var(--bg-soft)] px-1.5 py-0.5 text-[10px] tabular-nums text-[var(--text-muted)]">
                               {format(new Date(order.createdAt), "HH:mm")}
                             </span>
                           </div>
@@ -1005,7 +1040,8 @@ export function OrdersBoard() {
                           {(order.status === "NEW" ||
                             order.status === "ACCEPTED" ||
                             order.status === "PREPARING" ||
-                            order.status === "READY") && (
+                            order.status === "READY" ||
+                            order.status === "SERVED") && (
                             <button
                               type="button"
                               onClick={() => handlePrintReceipt(order)}

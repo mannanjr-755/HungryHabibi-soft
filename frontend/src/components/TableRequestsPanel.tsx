@@ -16,10 +16,12 @@ type TableRequest = {
 function requestToastMessage(r: TableRequest) {
   const kind =
     r.type === "WAITER"
-      ? "Call Waiter"
+      ? "Call staff"
       : r.type === "BILL"
-        ? "Request Bill"
-        : r.type;
+        ? "Bill request"
+        : r.type === "SERVE"
+          ? "Service request"
+          : r.type;
   const detail = (r.message || "").trim();
   if (detail && detail.toLowerCase() !== kind.toLowerCase()) {
     return `Table ${r.tableNumber}: ${detail}`;

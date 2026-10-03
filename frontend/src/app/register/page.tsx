@@ -15,7 +15,7 @@ export default function RegisterPage() {
       <div className="relative w-full max-w-md">
         <Link href="/" className="mb-8 flex flex-col items-center text-center">
           <BrandLogo size="hero" />
-          <span className="font-display mt-3 text-3xl text-[var(--gold-bright)]">BonPainer</span>
+          <span className="font-display mt-3 text-3xl text-[var(--gold-bright)]">Hungry Habibi</span>
           <span className="mt-1 text-xs uppercase tracking-[0.25em] text-[var(--text-dim)]">
             Create your restaurant
           </span>
