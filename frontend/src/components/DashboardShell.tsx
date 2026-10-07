@@ -1,11 +1,11 @@
 import { auth, signOut } from "@/lib/auth";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { TableRequestsPanel } from "@/components/TableRequestsPanel";
 import {
   DashboardMobileNav,
   DashboardSidebar,
   type NavKey,
 } from "@/components/DashboardSidebar";
+import { DashboardSearch } from "@/components/DashboardSearch";
 
 export type { NavKey };
 
@@ -22,64 +22,69 @@ export async function DashboardShell({
 }) {
   const session = await auth();
   const userName = session?.user.name || "Admin";
-  const roleLabel = session?.user.role === "ADMIN" ? "Administrator" : "Staff";
+  const roleLabel = session?.user.role === "ADMIN" ? "Owner" : "Staff";
   const restaurantName = session?.user.restaurantName || "Hungry Habibi";
-  void newOrderCount;
   void preparingCount;
-
-  const navbarControls = (
-    <div className="flex items-center gap-2 sm:gap-3">
-      <div className="flex min-w-0 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-2.5 py-1.5">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--gold)]/20 text-[11px] font-bold leading-none text-[var(--gold-bright)]">
-          {userName.slice(0, 1).toUpperCase()}
-        </span>
-        <div className="min-w-0 leading-tight">
-          <p className="truncate text-sm font-medium text-[var(--text)]">{userName}</p>
-          <p className="truncate text-[10px] text-[var(--text-dim)]">{roleLabel}</p>
-        </div>
-      </div>
-      <ThemeToggle className="shrink-0" />
-      <TableRequestsPanel className="shrink-0" />
-      <form
-        action={async () => {
-          "use server";
-          await signOut({ redirectTo: "/login" });
-        }}
-      >
-        <button
-          type="submit"
-          className="rounded-lg border border-[var(--border)] px-2.5 py-2 text-xs text-[var(--text-muted)] transition hover:border-[var(--gold)]/40 hover:text-[var(--gold-bright)]"
-        >
-          Log out
-        </button>
-      </form>
-    </div>
-  );
 
   return (
     <div className="flex min-h-screen bg-[var(--bg)] text-[var(--text)]">
-      <DashboardSidebar active={active} restaurantName={restaurantName} />
+      <DashboardSidebar
+        active={active}
+        restaurantName={restaurantName}
+        orderBadge={newOrderCount}
+      />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--bg-elevated)]/95 px-4 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-[var(--bg-elevated)]/80">
-          <div className="flex min-w-0 items-center gap-2 lg:invisible lg:w-0 lg:overflow-hidden">
+        <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-[var(--border)] bg-[var(--bg-elevated)]/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-[var(--bg-elevated)]/85 sm:px-6">
+          <div className="flex min-w-0 items-center gap-2 lg:hidden">
             <img
               src="/logo.png"
               alt="Hungry Habibi"
               width={32}
               height={32}
-              className="h-8 w-8 shrink-0 rounded-lg border border-[var(--gold)]/40 object-cover"
+              className="h-8 w-8 shrink-0 rounded-lg object-cover"
             />
-            <span className="truncate font-display text-sm text-[var(--gold-bright)]">
-              {restaurantName}
-            </span>
+            <span className="truncate text-sm font-bold text-[var(--text)]">{restaurantName}</span>
           </div>
-          {navbarControls}
+
+          <div className="mx-auto hidden w-full max-w-xl flex-1 md:block">
+            <DashboardSearch />
+          </div>
+
+          <div className="ml-auto flex items-center gap-2 sm:gap-3">
+            <TableRequestsPanel className="shrink-0" />
+            <div className="hidden items-center gap-2 sm:flex">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--primary-soft)] text-sm font-bold text-[var(--primary)]">
+                {userName.slice(0, 1).toUpperCase()}
+              </span>
+              <div className="min-w-0 leading-tight">
+                <p className="truncate text-sm font-semibold text-[var(--text)]">{restaurantName}</p>
+                <p className="truncate text-[11px] text-[var(--text-muted)]">{roleLabel}</p>
+              </div>
+            </div>
+            <form
+              action={async () => {
+                "use server";
+                await signOut({ redirectTo: "/login" });
+              }}
+            >
+              <button
+                type="submit"
+                className="rounded-xl border border-[var(--border)] px-2.5 py-2 text-xs font-medium text-[var(--text-muted)] transition hover:border-[var(--primary)]/30 hover:text-[var(--primary)]"
+              >
+                Log out
+              </button>
+            </form>
+          </div>
         </header>
 
-        <DashboardMobileNav active={active} />
+        <div className="border-b border-[var(--border)] px-4 py-2 md:hidden">
+          <DashboardSearch />
+        </div>
 
-        <main className="flex-1 overflow-x-hidden p-4 sm:p-6">{children}</main>
+        <DashboardMobileNav active={active} orderBadge={newOrderCount} />
+
+        <main className="flex-1 overflow-x-hidden p-4 sm:p-5 lg:p-6">{children}</main>
       </div>
     </div>
   );

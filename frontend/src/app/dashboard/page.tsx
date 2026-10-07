@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { DashboardShell } from "@/components/DashboardShell";
-import { OrdersBoard } from "@/components/OrdersBoard";
-import { ServiceFloor } from "@/components/ServiceFloor";
+import { DashboardHome } from "@/components/DashboardHome";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -9,8 +8,13 @@ export const metadata: Metadata = {
   title: "Dashboard",
 };
 
-export default async function DashboardPage() {
+type Props = {
+  searchParams: Promise<{ q?: string }>;
+};
+
+export default async function DashboardPage({ searchParams }: Props) {
   const session = await auth();
+  const params = await searchParams;
   let newOrderCount = 0;
   let preparingCount = 0;
   if (session?.user.restaurantId) {
@@ -22,14 +26,15 @@ export default async function DashboardPage() {
     });
   }
 
+  const restaurantName = session?.user.restaurantName || "Hungry Habibi";
+
   return (
     <DashboardShell
       active="orders"
       newOrderCount={newOrderCount}
       preparingCount={preparingCount}
     >
-      <ServiceFloor />
-      <OrdersBoard />
+      <DashboardHome restaurantName={restaurantName} initialQuery={params.q ?? ""} />
     </DashboardShell>
   );
 }

@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
+  ShoppingBag,
   Table2,
   UtensilsCrossed,
   Tags,
@@ -12,8 +12,6 @@ import {
   BarChart3,
   Package,
   Footprints,
-  PanelLeftClose,
-  PanelLeftOpen,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -34,24 +32,23 @@ export type NavKey =
   | "orders-link"
   | "kitchen";
 
-const STORAGE_KEY = "crm-sidebar-collapsed";
-
-const nav: { href: string; label: string; icon: LucideIcon; key: string }[] = [
+const nav: { href: string; label: string; icon: LucideIcon; key: string; badgeKey?: "orders" }[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, key: "orders" },
   {
     href: "/dashboard/walking-customer",
-    label: "Walking Customer",
-    icon: Footprints,
+    label: "Orders",
+    icon: ShoppingBag,
     key: "walking-customer",
+    badgeKey: "orders",
   },
+  { href: "/dashboard/menu", label: "Menu", icon: UtensilsCrossed, key: "menu" },
+  { href: "/dashboard/tables", label: "Tables", icon: Table2, key: "tables" },
   {
     href: "/dashboard/waiting-customers",
-    label: "Waiting Customers",
-    icon: Users,
+    label: "Waiting",
+    icon: Footprints,
     key: "waiting-customers",
   },
-  { href: "/dashboard/tables", label: "Tables", icon: Table2, key: "tables" },
-  { href: "/dashboard/menu", label: "Menu", icon: UtensilsCrossed, key: "menu" },
   { href: "/dashboard/categories", label: "Categories", icon: Tags, key: "categories" },
   { href: "/dashboard/customers", label: "Customers", icon: Users, key: "customers" },
   { href: "/dashboard/reports", label: "Reports", icon: BarChart3, key: "reports" },
@@ -69,49 +66,16 @@ function isNavActive(active: NavKey, key: string) {
 export function DashboardSidebar({
   active,
   restaurantName,
+  orderBadge = 0,
 }: {
   active: NavKey;
   restaurantName: string;
+  orderBadge?: number;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        setCollapsed(localStorage.getItem(STORAGE_KEY) === "1");
-      } catch {
-        /* ignore */
-      }
-      setReady(true);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
-
-  function toggleCollapsed() {
-    setCollapsed((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(STORAGE_KEY, next ? "1" : "0");
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
-  }
-
   return (
-    <aside
-      className={`hidden shrink-0 flex-col border-r border-[var(--border)] bg-[var(--bg-sidebar)] lg:flex ${
-        ready ? "transition-[width] duration-200 ease-out" : ""
-      } ${collapsed ? "w-[72px]" : "w-[240px]"}`}
-    >
-      <div
-        className={`flex items-center border-b border-[var(--border)] py-4 ${
-          collapsed ? "flex-col gap-2 px-2" : "gap-3 px-3"
-        }`}
-      >
-        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-[var(--gold)]/40 shadow-[var(--shadow)]">
+    <aside className="hidden w-[240px] shrink-0 flex-col border-r border-[var(--border)] bg-[var(--bg-sidebar)] lg:flex">
+      <div className="flex items-center gap-3 px-4 py-5">
+        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[var(--primary)] shadow-[var(--shadow-sm)]">
           <Image
             src="/logo.png"
             alt="Hungry Habibi"
@@ -121,79 +85,99 @@ export function DashboardSidebar({
             priority
           />
         </div>
-        {!collapsed && (
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-display text-lg leading-tight text-[var(--gold-bright)]">
-              {restaurantName}
-            </p>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-dim)]">
-              Kitchen Dashboard
-            </p>
-          </div>
-        )}
-        <button
-          type="button"
-          onClick={toggleCollapsed}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-muted)] transition hover:border-[var(--gold)]/40 hover:text-[var(--gold-bright)]"
-        >
-          {collapsed ? (
-            <PanelLeftOpen className="h-4 w-4" />
-          ) : (
-            <PanelLeftClose className="h-4 w-4" />
-          )}
-        </button>
+        <div className="min-w-0">
+          <p className="truncate text-[15px] font-bold leading-tight text-[var(--text)]">
+            Hungry Habibi
+          </p>
+          <p className="truncate text-[11px] text-[var(--text-muted)]">Kitchen & POS</p>
+        </div>
       </div>
 
-      <nav
-        className={`flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden py-3 ${
-          collapsed ? "px-1.5" : "px-2"
-        }`}
-      >
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
         {nav.map((item) => {
           const isActive = isNavActive(active, item.key);
           const Icon = item.icon;
+          const badge = item.badgeKey === "orders" && orderBadge > 0 ? orderBadge : 0;
 
           return (
             <Link
               key={item.key}
               href={item.href}
-              title={collapsed ? item.label : undefined}
-              className={`relative flex items-center rounded-lg text-sm transition ${
-                collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5"
-              } ${
+              className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
                 isActive
-                  ? "bg-gradient-to-r from-[var(--gold)]/25 to-transparent text-[var(--gold-bright)]"
+                  ? "bg-[var(--primary-soft)] text-[var(--primary)]"
                   : "text-[var(--text-muted)] hover:bg-[var(--bg-soft)] hover:text-[var(--text)]"
               }`}
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              {!collapsed && <span className="truncate leading-none">{item.label}</span>}
+              <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={isActive ? 2.25 : 1.75} />
+              <span className="truncate">{item.label}</span>
+              {badge > 0 && (
+                <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--danger)] px-1.5 text-[10px] font-bold text-white">
+                  {badge > 99 ? "99+" : badge}
+                </span>
+              )}
             </Link>
           );
         })}
       </nav>
+
+      <div className="p-3">
+        <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-soft)] shadow-[var(--shadow-sm)]">
+          <div className="relative h-20 w-full bg-[var(--primary-soft)]">
+            <Image
+              src="/logo.png"
+              alt=""
+              fill
+              className="object-cover opacity-90"
+              sizes="220px"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
+          </div>
+          <div className="space-y-1 p-3">
+            <p className="truncate text-sm font-semibold text-[var(--text)]">{restaurantName}</p>
+            <p className="truncate text-[11px] text-[var(--text-muted)]">Restaurant · Pakistan</p>
+            <div className="flex items-center gap-1.5 pt-1">
+              <span className="h-2 w-2 rounded-full bg-[var(--success)]" />
+              <span className="text-[11px] font-medium text-[var(--success)]">Online</span>
+              <span className="text-[11px] text-[var(--text-dim)]">· Live</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }
 
-export function DashboardMobileNav({ active }: { active: NavKey }) {
+export function DashboardMobileNav({
+  active,
+  orderBadge = 0,
+}: {
+  active: NavKey;
+  orderBadge?: number;
+}) {
   return (
-    <nav className="flex gap-1 overflow-x-auto border-b border-[var(--border)] px-3 py-2 lg:hidden">
-      {nav.map((item) => (
-        <Link
-          key={item.key}
-          href={item.href}
-          className={`shrink-0 rounded-lg px-3 py-1.5 text-xs ${
-            isNavActive(active, item.key)
-              ? "bg-[var(--gold)]/20 text-[var(--gold-bright)]"
-              : "text-[var(--text-muted)]"
-          }`}
-        >
-          {item.label}
-        </Link>
-      ))}
+    <nav className="flex gap-1 overflow-x-auto border-b border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 lg:hidden">
+      {nav.map((item) => {
+        const badge = item.badgeKey === "orders" && orderBadge > 0 ? orderBadge : 0;
+        return (
+          <Link
+            key={item.key}
+            href={item.href}
+            className={`relative shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${
+              isNavActive(active, item.key)
+                ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                : "text-[var(--text-muted)]"
+            }`}
+          >
+            {item.label}
+            {badge > 0 && (
+              <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[9px] font-bold text-white">
+                {badge}
+              </span>
+            )}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

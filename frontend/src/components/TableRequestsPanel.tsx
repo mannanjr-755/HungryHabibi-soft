@@ -118,7 +118,7 @@ export function TableRequestsPanel({ className = "" }: { className?: string }) {
         }}
         aria-label="Notifications"
         aria-expanded={open}
-        className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--gold)] transition hover:border-[var(--gold)]/40 hover:bg-[var(--gold)]/10"
+        className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-muted)] shadow-[var(--shadow-sm)] transition hover:border-[var(--primary)]/30 hover:text-[var(--primary)]"
       >
         <Bell className="h-4 w-4" />
         {pending.length > 0 && (

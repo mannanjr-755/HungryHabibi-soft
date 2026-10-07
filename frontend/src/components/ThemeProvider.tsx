@@ -27,14 +27,17 @@ function applyTheme(theme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("dark");
+  const [theme, setThemeState] = useState<Theme>("light");
 
   useEffect(() => {
     const timer = setTimeout(() => {
       const stored = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
-      const initial = stored === "light" || stored === "dark" ? stored : "dark";
+      const initial = stored === "dark" ? "dark" : "light";
       setThemeState(initial);
       applyTheme(initial);
+      if (stored !== "dark") {
+        window.localStorage.setItem(STORAGE_KEY, "light");
+      }
     }, 0);
     return () => clearTimeout(timer);
   }, []);
